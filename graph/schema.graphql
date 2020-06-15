@@ -11,19 +11,52 @@ type Event {
     longitude: Float!
     startDate: String!
     endDate: String!
-}
-
-type Query {
-    events: [Event]
+    users: [User]
 }
 
 input NewEvent {
     name: String!
-    address: String!
-    lat: Float!
-    long: Float!
+    description: String!
+    addressLine1: String!
+    addressLine2: String!
+    city: String!
+    state: String!
+    zip: Int!
     startDate: String!
     endDate: String!
+}
+
+type User {
+    id: Int!
+    firstName: String!
+    lastName: String!
+    email: String!
+    username: String!
+    password: String!
+    events: [Event]
+}
+
+input NewUser {
+    firstName: String!
+    lastName: String!
+    email: String!
+    username: String!
+    password: String!
+}
+
+type School {
+    id: Int!
+    name: String!
+    events: [Event]
+    users: [User]
+}
+
+input NewSchool {
+    name: String!
+}
+
+type Query {
+    events: [Event]
 }
 
 type Mutation {
