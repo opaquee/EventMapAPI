@@ -1,3 +1,6 @@
+scalar Upload
+scalar Time
+
 type Event {
     id: Int!
     name: String!
@@ -9,8 +12,8 @@ type Event {
     zip: Int!
     latitude: Float!
     longitude: Float!
-    startDate: String!
-    endDate: String!
+    startDate: Time!
+    endDate: Time!
     users: [User]
 }
 
@@ -33,6 +36,7 @@ type User {
     email: String!
     username: String!
     password: String!
+    profilePicture: Upload!
     events: [Event]
 }
 
@@ -42,6 +46,7 @@ input NewUser {
     email: String!
     username: String!
     password: String!
+    profilePicture: Upload!
 }
 
 type School {
