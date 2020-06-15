@@ -1,9 +1,14 @@
 type Event {
-    id: ID!
+    id: Int!
     name: String!
-    address: String!
-    lat: Float!
-    long: Float!
+    description: String!
+    addressLine1: String!
+    addressLine2: String!
+    city: String!
+    state: String!
+    zip: Int!
+    latitude: Float!
+    longitude: Float!
     startDate: String!
     endDate: String!
 }
