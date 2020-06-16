@@ -17,6 +17,7 @@ type Event {
     users: [User]
 }
 
+
 input NewEvent {
     name: String!
     description: String!
@@ -25,8 +26,8 @@ input NewEvent {
     city: String!
     state: String!
     zip: Int!
-    startDate: String!
-    endDate: String!
+    startDate: Time!
+    endDate: Time!
 }
 
 type User {
@@ -36,7 +37,7 @@ type User {
     email: String!
     username: String!
     password: String!
-    profilePicture: Upload!
+    profilePicture: Upload
     events: [Event]
 }
 
@@ -46,24 +47,27 @@ input NewUser {
     email: String!
     username: String!
     password: String!
-    profilePicture: Upload!
-}
-
-type School {
-    id: Int!
-    name: String!
-    events: [Event]
-    users: [User]
-}
-
-input NewSchool {
-    name: String!
 }
 
 type Query {
-    events: [Event]
+    getAllNearbyEvents(latitude: Float!, longitude: Float!): [Event]
+    getEventUsers: [User]
+    getEventById(eventId: Int!): Event!
+    getUserById(userId: Int!): User!
 }
 
 type Mutation {
+    createUser(input: NewUser!): User!
+    updateUser(input: NewUser!): User!
+    deleteUser(userId: Int!): Boolean!
+    
     createEvent(input: NewEvent!): Event!
+    updateEvent(input: NewEvent!): Event!
+    deleteEvent(eventId: Int!): Boolean!
+
+    addUserProfilePicture(profilePicture: Upload!): User!
+    removeUserProfilePicture(userId: Int!): Boolean!
+
+    addUserToEvent(userId: Int!, eventId: Int!): Event!
+    removeUserFromEvent(userId: Int!, eventId: Int!): Boolean!
 }
