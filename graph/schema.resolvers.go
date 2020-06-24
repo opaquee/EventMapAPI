@@ -13,7 +13,19 @@ import (
 )
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	user := model.User{
+		FirstName: input.FirstName,
+		LastName:  input.LastName,
+		Email:     input.Email,
+		Username:  input.Username,
+		Password:  input.Password,
+	}
+	r.DB.Create(&user)
+
+	createdUser := &model.User{}
+	r.DB.Table("users").Where(&user).First(createdUser)
+
+	return createdUser, nil
 }
 
 func (r *mutationResolver) UpdateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
@@ -76,5 +88,3 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-
