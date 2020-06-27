@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -23,6 +24,7 @@ func main() {
 	var err error
 
 	log.Println("Connecting to database...")
+	time.Sleep(10 * time.Second)
 	db, err := gorm.Open("postgres", "host=db port=5432 dbname=postgres user=user password=secret sslmode=disable")
 	defer db.Close()
 	if err != nil {
