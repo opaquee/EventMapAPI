@@ -6,11 +6,16 @@ package graph
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/opaquee/EventMapAPI/graph/generated"
 	"github.com/opaquee/EventMapAPI/graph/model"
 )
+
+func (r *eventResolver) ID(ctx context.Context, obj *model.Event) (string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
 	user := model.User{
@@ -20,12 +25,13 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 		Username:  input.Username,
 		Password:  input.Password,
 	}
-	r.DB.Create(&user)
 
-	createdUser := &model.User{}
-	r.DB.Table("users").Where(&user).First(createdUser)
+	if err := r.DB.Create(&user).Error; err != nil {
+		log.Print("Failed to create user.")
+		return &model.User{}, err
+	}
 
-	return createdUser, nil
+	return &user, nil
 }
 
 func (r *mutationResolver) UpdateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
@@ -80,11 +86,23 @@ func (r *queryResolver) GetUserByID(ctx context.Context, userID int) (*model.Use
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *userResolver) ID(ctx context.Context, obj *model.User) (string, error) {
+	return obj.UUIDKey.ID.String(), nil
+}
+
+// Event returns generated.EventResolver implementation.
+func (r *Resolver) Event() generated.EventResolver { return &eventResolver{r} }
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// User returns generated.UserResolver implementation.
+func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
+
+type eventResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type userResolver struct{ *Resolver }

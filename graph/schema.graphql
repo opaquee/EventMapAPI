@@ -2,7 +2,7 @@ scalar Upload
 scalar Time
 
 type Event {
-    id: Int!
+    id: ID!
     name: String!
     description: String!
     addressLine1: String!
@@ -31,7 +31,7 @@ input NewEvent {
 }
 
 type User {
-    id: Int!
+    id: ID!
     firstName: String!
     lastName: String!
     email: String!
