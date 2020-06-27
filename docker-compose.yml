@@ -34,6 +34,8 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: user
       PGADMIN_DEFAULT_PASSWORD: secret
+    logging:
+      driver: "none"
     depends_on:
       - db
     ports:
