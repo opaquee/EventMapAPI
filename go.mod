@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/99designs/gqlgen v0.11.3
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/jinzhu/gorm v1.9.14
 	github.com/lib/pq v1.7.0 // indirect
 	github.com/satori/go.uuid v1.2.0
