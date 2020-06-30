@@ -8,4 +8,5 @@ require (
 	github.com/lib/pq v1.7.0 // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/vektah/gqlparser/v2 v2.0.1
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 // indirect
 )
