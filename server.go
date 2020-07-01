@@ -9,31 +9,27 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/opaquee/EventMapAPI/graph"
 	"github.com/opaquee/EventMapAPI/graph/generated"
 	"github.com/opaquee/EventMapAPI/graph/model"
+	"github.com/opaquee/EventMapAPI/helpers/conn"
 )
 
 const defaultPort = "8080"
 
-var db *gorm.DB
-
 func main() {
-	var err error
-
 	log.Println("Connecting to database...")
 	time.Sleep(10 * time.Second)
-	db, err := gorm.Open("postgres", "host=db port=5432 dbname=postgres user=user password=secret sslmode=disable")
-	defer db.Close()
+	err := conn.OpenDB()
+	defer conn.DB.Close()
 	if err != nil {
 		fmt.Println(err)
-		panic("failed to connect database")
+		panic("Failed to connect to database")
 	}
 
 	log.Println("Migrating tables...")
-	db.AutoMigrate(&model.User{}, &model.Event{})
+	conn.DB.AutoMigrate(&model.User{}, &model.Event{})
 
 	log.Println("Starting server. Hold on to your potatoes!")
 	port := os.Getenv("PORT")
@@ -42,7 +38,7 @@ func main() {
 	}
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
-		DB: db,
+		DB: conn.DB,
 	}}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
