@@ -14,7 +14,7 @@ import (
 	"github.com/opaquee/EventMapAPI/graph"
 	"github.com/opaquee/EventMapAPI/graph/generated"
 	"github.com/opaquee/EventMapAPI/graph/model"
-	"github.com/opaquee/EventMapAPI/helpers/conn"
+	"github.com/opaquee/EventMapAPI/helpers/dbconn"
 )
 
 var db *gorm.DB
@@ -24,7 +24,7 @@ const defaultPort = "8080"
 func main() {
 	time.Sleep(10 * time.Second)
 	log.Println("Connecting to database...")
-	db, err := conn.OpenDB()
+	db, err := dbconn.OpenDB()
 	defer db.Close()
 	if err != nil {
 		fmt.Println(err)
