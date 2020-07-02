@@ -1,9 +1,12 @@
-package helpers
+package auth
 
 import (
 	"context"
 	"net/http"
-	"strconv"
+
+	"github.com/jinzhu/gorm"
+	"github.com/opaquee/EventMapAPI/graph/model"
+	"github.com/opaquee/EventMapAPI/helpers/userhelper"
 )
 
 var userCtxKey = &contextKey{"user"}
@@ -12,7 +15,7 @@ type contextKey struct {
 	name string
 }
 
-func Middleware() func(http.Handler) http.Handler {
+func Middleware(db *gorm.DB) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			header := r.Header.Get("Authorization")
@@ -29,13 +32,13 @@ func Middleware() func(http.Handler) http.Handler {
 				return
 			}
 
-			user := users.User{Username: username}
-			id, err := GetUserIdByUsername(username)
+			user := model.User{Username: username}
+			id, err := userhelper.GetIdByUsername(username)
 			if err != nil {
 				next.ServeHTTP(w, r)
 				return
 			}
-			user.ID = strconv.Itoa(id)
+			user.UUIDKey.ID = id
 			ctx := context.WithValue(r.Context(), userCtxKey, &user)
 
 			r = r.WithContext(ctx)
@@ -44,7 +47,7 @@ func Middleware() func(http.Handler) http.Handler {
 	}
 }
 
-func ForContext(ctx context.Context) *users.User {
-	raw, _ := ctx.Value(userCtxKey).(*users.User)
+func ForContext(ctx context.Context) *model.User {
+	raw, _ := ctx.Value(userCtxKey).(*model.User)
 	return raw
 }

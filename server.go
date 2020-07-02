@@ -24,7 +24,7 @@ const defaultPort = "8080"
 func main() {
 	time.Sleep(10 * time.Second)
 	log.Println("Connecting to database...")
-	db, err := dbconn.OpenDB()
+	db, err := dbconn.Open()
 	defer db.Close()
 	if err != nil {
 		fmt.Println(err)

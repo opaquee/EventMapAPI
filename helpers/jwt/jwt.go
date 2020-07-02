@@ -1,3 +1,12 @@
+package jwt
+
+import (
+	"log"
+	"time"
+
+	"github.com/dgrijalva/jwt-go"
+)
+
 var (
 	SecretKey = []byte("secret")
 )
