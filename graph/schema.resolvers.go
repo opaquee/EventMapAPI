@@ -11,6 +11,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/opaquee/EventMapAPI/graph/generated"
 	"github.com/opaquee/EventMapAPI/graph/model"
+	"github.com/opaquee/EventMapAPI/helpers/users"
 )
 
 func (r *eventResolver) ID(ctx context.Context, obj *model.Event) (string, error) {
@@ -18,17 +19,23 @@ func (r *eventResolver) ID(ctx context.Context, obj *model.Event) (string, error
 }
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
+	hashedPassword, err := users.HashPassword(input.Password)
+	if err != nil {
+		log.Print("error hashing password")
+		return nil, err
+	}
+
 	user := model.User{
 		FirstName: input.FirstName,
 		LastName:  input.LastName,
 		Email:     input.Email,
 		Username:  input.Username,
-		Password:  input.Password,
+		Password:  hashedPassword,
 	}
 
 	if err := r.DB.Create(&user).Error; err != nil {
-		log.Print("Failed to create user.")
-		return &model.User{}, err
+		log.Print("failed to create user")
+		return nil, err
 	}
 
 	return &user, nil
