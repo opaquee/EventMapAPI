@@ -9,11 +9,13 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/go-chi/chi"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/opaquee/EventMapAPI/graph"
 	"github.com/opaquee/EventMapAPI/graph/generated"
 	"github.com/opaquee/EventMapAPI/graph/model"
+	"github.com/opaquee/EventMapAPI/helpers/auth"
 	"github.com/opaquee/EventMapAPI/helpers/dbconn"
 )
 
@@ -23,6 +25,7 @@ const defaultPort = "8080"
 
 func main() {
 	time.Sleep(10 * time.Second)
+
 	log.Println("Connecting to database...")
 	db, err := dbconn.Open()
 	defer db.Close()
@@ -40,13 +43,17 @@ func main() {
 		port = defaultPort
 	}
 
+	log.Println("Applying middleware...")
+	router := chi.NewRouter()
+	router.Use(auth.Middleware(db))
+
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
 		DB: db,
 	}}))
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
+	router.Handle("/query", srv)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }
