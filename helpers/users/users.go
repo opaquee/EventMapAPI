@@ -14,10 +14,23 @@ func GetIdByUsername(username string, db *gorm.DB) (id uuid.UUID, err error) {
 		Username: username,
 	}
 	if err := db.Where(&user).First(&user).Error; err != nil {
-		log.Print("Failed to get user by username")
+		log.Print("Failed to get user by username: ", err.Error())
 		return uuid.UUID{}, err
 	}
 	return user.UUIDKey.ID, nil
+}
+
+func Authenticate(incomingUser *model.User, db *gorm.DB) bool {
+	userFromDB := model.User{}
+
+	if err := db.Where(model.User{
+		Username: incomingUser.Username,
+	}).First(&userFromDB).Error; err != nil {
+		log.Print("Failed to get user by username: ", err.Error())
+		return false
+	}
+
+	return CheckPasswordHash(incomingUser.Password, userFromDB.Password)
 }
 
 func HashPassword(password string) (string, error) {

@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
@@ -56,7 +57,21 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, userID int) (bool, er
 }
 
 func (r *mutationResolver) Login(ctx context.Context, input model.Login) (string, error) {
-	panic(fmt.Errorf("not implemented"))
+	user := model.User{
+		Username: input.Username,
+		Password: input.Password,
+	}
+
+	if users.Authenticate(&user, r.DB) == false {
+		return "", errors.New("wrong username or password")
+	}
+
+	token, err := jwt.GenerateToken(user.Username)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }
 
 func (r *mutationResolver) RefreshToken(ctx context.Context, input model.RefreshTokenInput) (string, error) {
