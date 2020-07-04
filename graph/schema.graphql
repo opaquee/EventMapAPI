@@ -49,6 +49,15 @@ input NewUser {
     password: String!
 }
 
+input Login {
+    username: String!
+    password: String!
+}
+
+input RefreshTokenInput{
+    token: String!
+}
+
 type Query {
     getAllNearbyEvents(latitude: Float!, longitude: Float!): [Event]
     getEventUsers: [User]
@@ -57,10 +66,13 @@ type Query {
 }
 
 type Mutation {
-    createUser(input: NewUser!): User!
+    createUser(input: NewUser!): String!
     updateUser(input: NewUser!): User!
     deleteUser(userId: Int!): Boolean!
     
+    login(input: Login!): String!
+    refreshToken(input: RefreshTokenInput!): String!
+
     createEvent(input: NewEvent!): Event!
     updateEvent(input: NewEvent!): Event!
     deleteEvent(eventId: Int!): Boolean!
@@ -71,3 +83,7 @@ type Mutation {
     addUserToEvent(userId: Int!, eventId: Int!): Event!
     removeUserFromEvent(userId: Int!, eventId: Int!): Boolean!
 }
+
+
+
+
