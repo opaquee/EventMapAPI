@@ -6,7 +6,8 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/opaquee/EventMapAPI/graph/model"
-	"github.com/opaquee/EventMapAPI/helpers/userhelper"
+	"github.com/opaquee/EventMapAPI/helpers/jwt"
+	"github.com/opaquee/EventMapAPI/helpers/users"
 )
 
 var userCtxKey = &contextKey{"user"}
@@ -26,14 +27,14 @@ func Middleware(db *gorm.DB) func(http.Handler) http.Handler {
 			}
 
 			tokenStr := header
-			username, err := ParseToken(tokenStr)
+			username, err := jwt.ParseToken(tokenStr)
 			if err != nil {
 				http.Error(w, "Invalid token", http.StatusForbidden)
 				return
 			}
 
 			user := model.User{Username: username}
-			id, err := userhelper.GetIdByUsername(username)
+			id, err := users.GetIdByUsername(username, db)
 			if err != nil {
 				next.ServeHTTP(w, r)
 				return

@@ -5,18 +5,19 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/opaquee/EventMapAPI/graph/model"
+	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func GetIdByUsername(username string, db *gorm.DB) (id string, err error) {
+func GetIdByUsername(username string, db *gorm.DB) (id uuid.UUID, err error) {
 	user := model.User{
 		Username: username,
 	}
 	if err := db.Where(&user).First(&user).Error; err != nil {
 		log.Print("Failed to get user by username")
-		return "", err
+		return uuid.UUID{}, err
 	}
-	return user.UUIDKey.ID.String(), nil
+	return user.UUIDKey.ID, nil
 }
 
 func HashPassword(password string) (string, error) {
