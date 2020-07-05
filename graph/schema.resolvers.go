@@ -59,7 +59,9 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, username string, inpu
 	if err != nil {
 		return nil, err
 	}
-
+	if userFromCtx == nil {
+		return nil, errors.New("no user information from context. You probably didn't provide a token")
+	}
 	if userFromCtx.UUIDKey.ID != userFromDB.UUIDKey.ID {
 		return nil, errors.New("access denied")
 	}
@@ -85,7 +87,23 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, username string, inpu
 }
 
 func (r *mutationResolver) DeleteUser(ctx context.Context, username string) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	userFromCtx := auth.ForContext(ctx)
+	userFromDB, err := users.GetUserByUsername(username, r.DB)
+	if err != nil {
+		return false, err
+	}
+	if userFromCtx == nil {
+		return false, errors.New("no user information from context. You probably didn't provide a token")
+	}
+	if userFromCtx.UUIDKey.ID != userFromDB.UUIDKey.ID {
+		return false, errors.New("access denied")
+	}
+
+	if err := r.DB.Unscoped().Delete(&userFromDB).Error; err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (r *mutationResolver) Login(ctx context.Context, input model.Login) (string, error) {
