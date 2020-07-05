@@ -1,7 +1,7 @@
 package users
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/jinzhu/gorm"
 	"github.com/opaquee/EventMapAPI/graph/model"
@@ -14,23 +14,22 @@ func GetIdByUsername(username string, db *gorm.DB) (id uuid.UUID, err error) {
 		Username: username,
 	}
 	if err := db.Where(&user).First(&user).Error; err != nil {
-		log.Print("Failed to get user by username: ", err.Error())
+		fmt.Println(err)
 		return uuid.UUID{}, err
 	}
 	return user.UUIDKey.ID, nil
 }
 
-func Authenticate(incomingUser *model.User, db *gorm.DB) bool {
+func Authenticate(incomingUser *model.User, db *gorm.DB) (correct bool, err error) {
 	userFromDB := model.User{}
 
-	if err := db.Where(model.User{
+	if err = db.Where(model.User{
 		Username: incomingUser.Username,
 	}).First(&userFromDB).Error; err != nil {
-		log.Print("Failed to get user by username: ", err.Error())
-		return false
+		return false, err
 	}
 
-	return CheckPasswordHash(incomingUser.Password, userFromDB.Password)
+	return CheckPasswordHash(incomingUser.Password, userFromDB.Password), nil
 }
 
 func HashPassword(password string) (string, error) {

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -30,8 +29,7 @@ func main() {
 	db, err := dbconn.Open()
 	defer db.Close()
 	if err != nil {
-		fmt.Println(err)
-		panic("Failed to connect to database")
+		panic(err)
 	}
 
 	log.Println("Migrating tables...")

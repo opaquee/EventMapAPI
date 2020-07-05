@@ -7,11 +7,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/opaquee/EventMapAPI/graph/generated"
 	"github.com/opaquee/EventMapAPI/graph/model"
+	"github.com/opaquee/EventMapAPI/helpers/auth"
 	"github.com/opaquee/EventMapAPI/helpers/jwt"
 	"github.com/opaquee/EventMapAPI/helpers/users"
 )
@@ -23,7 +23,6 @@ func (r *eventResolver) ID(ctx context.Context, obj *model.Event) (string, error
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (string, error) {
 	hashedPassword, err := users.HashPassword(input.Password)
 	if err != nil {
-		log.Print("error hashing password")
 		return "", err
 	}
 
@@ -36,7 +35,6 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 	}
 
 	if err := r.DB.Create(&user).Error; err != nil {
-		log.Print("failed to create user")
 		return "", err
 	}
 
@@ -48,8 +46,9 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 	return token, nil
 }
 
-func (r *mutationResolver) UpdateUser(ctx context.Context, input model.NewUser) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) UpdateUser(ctx context.Context, input model.NewUser, userID *string) (*model.User, error) {
+	user := auth.ForContext(ctx)
+	return user, nil
 }
 
 func (r *mutationResolver) DeleteUser(ctx context.Context, userID int) (bool, error) {
@@ -62,8 +61,13 @@ func (r *mutationResolver) Login(ctx context.Context, input model.Login) (string
 		Password: input.Password,
 	}
 
-	if users.Authenticate(&user, r.DB) == false {
-		return "", errors.New("wrong username or password")
+	correctLogin, err := users.Authenticate(&user, r.DB)
+	if err != nil {
+		return "", err
+	}
+
+	if correctLogin == false {
+		return "", errors.New("incorrect username or password")
 	}
 
 	token, err := jwt.GenerateToken(user.Username)
