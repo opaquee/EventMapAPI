@@ -21,6 +21,13 @@ func (r *eventResolver) ID(ctx context.Context, obj *model.Event) (string, error
 }
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (string, error) {
+	if err := users.Duplicate(&model.User{
+		Email:    input.Email,
+		Username: input.Username,
+	}, r.DB); err != nil {
+		return "", err
+	}
+
 	hashedPassword, err := users.HashPassword(input.Password)
 	if err != nil {
 		return "", err

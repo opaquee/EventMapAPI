@@ -1,6 +1,7 @@
 package users
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/jinzhu/gorm"
@@ -40,4 +41,24 @@ func HashPassword(password string) (string, error) {
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
+}
+
+func Duplicate(incomingUser *model.User, db *gorm.DB) (err error) {
+	var user model.User
+
+	err = db.Where(model.User{
+		Username: incomingUser.Username,
+	}).Or(model.User{
+		Email: incomingUser.Email,
+	}).First(&user).Error
+
+	if err != nil && gorm.IsRecordNotFoundError(err) == false {
+		return err
+	}
+
+	if gorm.IsRecordNotFoundError(err) == false {
+		return errors.New("username or email is duplicate")
+	}
+
+	return nil
 }
