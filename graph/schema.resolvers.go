@@ -55,22 +55,13 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 
 func (r *mutationResolver) UpdateUser(ctx context.Context, username string, input model.UpdateUserInput) (*model.User, error) {
 	userFromCtx := auth.ForContext(ctx)
-	userIDFromDB, err := users.GetIdByUsername(username, r.DB)
+	userFromDB, err := users.GetUserByUsername(username, r.DB)
 	if err != nil {
 		return nil, err
 	}
 
-	if userFromCtx.UUIDKey.ID != userIDFromDB {
+	if userFromCtx.UUIDKey.ID != userFromDB.UUIDKey.ID {
 		return nil, errors.New("access denied")
-	}
-
-	newUser := &model.User{
-		UUIDKey:   userFromCtx.UUIDKey,
-		FirstName: input.FirstName,
-		LastName:  input.LastName,
-		Email:     input.Email,
-		Username:  userFromCtx.Username,
-		Password:  input.Password,
 	}
 
 	//if email is duplicate, reject
@@ -82,9 +73,15 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, username string, inpu
 		}
 	}
 
-	r.DB.Save(newUser)
+	userFromDB.FirstName = input.FirstName
+	userFromDB.LastName = input.LastName
+	userFromDB.Email = input.Email
 
-	return newUser, nil
+	if err := r.DB.Save(userFromDB).Error; err != nil {
+		return nil, err
+	}
+
+	return userFromDB, nil
 }
 
 func (r *mutationResolver) DeleteUser(ctx context.Context, username string) (bool, error) {

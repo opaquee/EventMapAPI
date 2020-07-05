@@ -5,21 +5,8 @@ import (
 
 	"github.com/jinzhu/gorm"
 	"github.com/opaquee/EventMapAPI/graph/model"
-	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 )
-
-func GetIdByUsername(username string, db *gorm.DB) (id uuid.UUID, err error) {
-	user := model.User{
-		Username: username,
-	}
-
-	if err := db.Where(&user).First(&user).Error; err != nil {
-		return uuid.UUID{}, err
-	}
-
-	return user.UUIDKey.ID, nil
-}
 
 func GetUserByUsername(username string, db *gorm.DB) (user *model.User, err error) {
 	user = &model.User{
@@ -30,16 +17,7 @@ func GetUserByUsername(username string, db *gorm.DB) (user *model.User, err erro
 		return nil, err
 	}
 
-	//Omit password, pfp information, etc. Meant for use in auth middleware
-	userFields := &model.User{
-		UUIDKey:   user.UUIDKey,
-		Username:  user.Username,
-		Email:     user.Email,
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-	}
-
-	return userFields, nil
+	return user, nil
 }
 
 func Authenticate(incomingUser *model.User, db *gorm.DB) (correct bool, err error) {
