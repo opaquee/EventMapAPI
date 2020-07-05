@@ -53,12 +53,41 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) 
 	return token, nil
 }
 
-func (r *mutationResolver) UpdateUser(ctx context.Context, input model.NewUser, userID *string) (*model.User, error) {
-	user := auth.ForContext(ctx)
-	return user, nil
+func (r *mutationResolver) UpdateUser(ctx context.Context, username string, input model.UpdateUserInput) (*model.User, error) {
+	userFromCtx := auth.ForContext(ctx)
+	userIDFromDB, err := users.GetIdByUsername(username, r.DB)
+	if err != nil {
+		return nil, err
+	}
+
+	if userFromCtx.UUIDKey.ID != userIDFromDB {
+		return nil, errors.New("access denied")
+	}
+
+	newUser := &model.User{
+		UUIDKey:   userFromCtx.UUIDKey,
+		FirstName: input.FirstName,
+		LastName:  input.LastName,
+		Email:     input.Email,
+		Username:  userFromCtx.Username,
+		Password:  input.Password,
+	}
+
+	//if email is duplicate, reject
+	if userFromCtx.Email != input.Email {
+		if err := users.Duplicate(&model.User{
+			Email: input.Email,
+		}, r.DB); err != nil {
+			return nil, err
+		}
+	}
+
+	r.DB.Save(newUser)
+
+	return newUser, nil
 }
 
-func (r *mutationResolver) DeleteUser(ctx context.Context, userID int) (bool, error) {
+func (r *mutationResolver) DeleteUser(ctx context.Context, username string) (bool, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
