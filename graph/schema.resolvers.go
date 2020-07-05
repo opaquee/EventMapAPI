@@ -59,11 +59,9 @@ func (r *mutationResolver) UpdateUser(ctx context.Context, username string, inpu
 	if err != nil {
 		return nil, err
 	}
-	if userFromCtx == nil {
-		return nil, errors.New("no user information from context. You probably didn't provide a token")
-	}
-	if userFromCtx.UUIDKey.ID != userFromDB.UUIDKey.ID {
-		return nil, errors.New("access denied")
+
+	if err := users.CheckAccess(userFromCtx, userFromDB); err != nil {
+		return nil, err
 	}
 
 	//if email is duplicate, reject
@@ -92,11 +90,9 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, username string) (boo
 	if err != nil {
 		return false, err
 	}
-	if userFromCtx == nil {
-		return false, errors.New("no user information from context. You probably didn't provide a token")
-	}
-	if userFromCtx.UUIDKey.ID != userFromDB.UUIDKey.ID {
-		return false, errors.New("access denied")
+
+	if err := users.CheckAccess(userFromCtx, userFromDB); err != nil {
+		return false, err
 	}
 
 	if err := r.DB.Unscoped().Delete(&userFromDB).Error; err != nil {

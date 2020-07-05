@@ -61,3 +61,13 @@ func Duplicate(incomingUser *model.User, db *gorm.DB) (err error) {
 
 	return nil
 }
+
+func CheckAccess(userFromCtx *model.User, userFromDB *model.User) (err error) {
+	if userFromCtx == nil {
+		return errors.New("no user information from context. You probably didn't provide a token")
+	}
+	if userFromCtx.UUIDKey.ID != userFromDB.UUIDKey.ID {
+		return errors.New("access denied")
+	}
+	return nil
+}
