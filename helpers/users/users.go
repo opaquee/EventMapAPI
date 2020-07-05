@@ -2,7 +2,6 @@ package users
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/jinzhu/gorm"
 	"github.com/opaquee/EventMapAPI/graph/model"
@@ -14,11 +13,33 @@ func GetIdByUsername(username string, db *gorm.DB) (id uuid.UUID, err error) {
 	user := model.User{
 		Username: username,
 	}
+
 	if err := db.Where(&user).First(&user).Error; err != nil {
-		fmt.Println(err)
 		return uuid.UUID{}, err
 	}
+
 	return user.UUIDKey.ID, nil
+}
+
+func GetUserByUsername(username string, db *gorm.DB) (user *model.User, err error) {
+	user = &model.User{
+		Username: username,
+	}
+
+	if err := db.Where(&user).First(&user).Error; err != nil {
+		return nil, err
+	}
+
+	//Omit password, pfp information, etc. Meant for use in auth middleware
+	userFields := &model.User{
+		UUIDKey:   user.UUIDKey,
+		Username:  user.Username,
+		Email:     user.Email,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+	}
+
+	return userFields, nil
 }
 
 func Authenticate(incomingUser *model.User, db *gorm.DB) (correct bool, err error) {
