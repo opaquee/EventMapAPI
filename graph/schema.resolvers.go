@@ -20,6 +20,14 @@ func (r *eventResolver) ID(ctx context.Context, obj *model.Event) (string, error
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *eventResolver) Users(ctx context.Context, obj *model.Event) ([]*model.User, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *eventResolver) Owner(ctx context.Context, obj *model.Event) (*model.User, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (string, error) {
 	if err := users.Duplicate(&model.User{
 		Email:    input.Email,
@@ -185,6 +193,18 @@ func (r *queryResolver) GetUserByID(ctx context.Context, userID int) (*model.Use
 
 func (r *userResolver) ID(ctx context.Context, obj *model.User) (string, error) {
 	return obj.UUIDKey.ID.String(), nil
+}
+
+func (r *userResolver) ProfilePicture(ctx context.Context, obj *model.User) (*graphql.Upload, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *userResolver) Events(ctx context.Context, obj *model.User) ([]*model.Event, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *userResolver) OwnedEvents(ctx context.Context, obj *model.User) ([]*model.Event, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 // Event returns generated.EventResolver implementation.

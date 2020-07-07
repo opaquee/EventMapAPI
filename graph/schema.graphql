@@ -15,6 +15,7 @@ type Event {
     startDate: Time!
     endDate: Time!
     users: [User]
+    owner: User!
 }
 
 
@@ -39,6 +40,7 @@ type User {
     password: String!
     profilePicture: Upload
     events: [Event]
+    ownedEvents: [Event]
 }
 
 input NewUser {
