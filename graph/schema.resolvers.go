@@ -14,6 +14,7 @@ import (
 	"github.com/opaquee/EventMapAPI/helpers/auth"
 	"github.com/opaquee/EventMapAPI/helpers/jwt"
 	"github.com/opaquee/EventMapAPI/helpers/users"
+	uuid "github.com/satori/go.uuid"
 )
 
 func (r *eventResolver) ID(ctx context.Context, obj *model.Event) (string, error) {
@@ -177,7 +178,25 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, eventID string, inpu
 }
 
 func (r *mutationResolver) DeleteEvent(ctx context.Context, eventID string) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	//TODO: handle auth and relation here
+	//Reject if no user in context
+
+	id, err := uuid.FromString(eventID)
+	if err != nil {
+		return false, err
+	}
+
+	UUIDKey := model.UUIDKey{
+		ID: id,
+	}
+
+	if err := r.DB.Unscoped().Delete(&model.Event{
+		UUIDKey: UUIDKey,
+	}).Error; err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (r *mutationResolver) AddUserProfilePicture(ctx context.Context, profilePicture graphql.Upload) (*model.User, error) {
