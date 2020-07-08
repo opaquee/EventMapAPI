@@ -174,7 +174,31 @@ func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent
 }
 
 func (r *mutationResolver) UpdateEvent(ctx context.Context, eventID string, input model.NewEvent) (*model.Event, error) {
-	panic(fmt.Errorf("not implemented"))
+	//TODO: handle auth and relation here
+	//Reject if no user in context
+
+	newEvent := model.Event{
+		Name:         input.Name,
+		Description:  input.Description,
+		AddressLine1: input.AddressLine1,
+		AddressLine2: input.AddressLine2,
+		City:         input.City,
+		State:        input.State,
+		Zip:          input.Zip,
+	}
+
+	id, err := uuid.FromString(eventID)
+	if err != nil {
+		return nil, err
+	}
+
+	newEvent.UUIDKey.ID = id
+
+	if err := r.DB.Save(&newEvent).Error; err != nil {
+		return nil, err
+	}
+
+	return &newEvent, nil
 }
 
 func (r *mutationResolver) DeleteEvent(ctx context.Context, eventID string) (bool, error) {
