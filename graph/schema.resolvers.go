@@ -17,7 +17,7 @@ import (
 )
 
 func (r *eventResolver) ID(ctx context.Context, obj *model.Event) (string, error) {
-	panic(fmt.Errorf("not implemented"))
+	return obj.UUIDKey.ID.String(), nil
 }
 
 func (r *eventResolver) Users(ctx context.Context, obj *model.Event) ([]*model.User, error) {
@@ -148,14 +148,35 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, input model.Refresh
 }
 
 func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent) (*model.Event, error) {
+	//TODO: handle auth and relation here
+	//Reject if no user in context
+	//Add user ID/owner foreign key to event
+
+	event := model.Event{
+		Name:         input.Name,
+		Description:  input.Description,
+		AddressLine1: input.AddressLine1,
+		AddressLine2: input.AddressLine2,
+		City:         input.City,
+		State:        input.State,
+		Zip:          input.Zip,
+		//Latitude:   TODO,
+		//Longitude:  TODO,
+	}
+	//TODO: Geocode address, get lat long
+
+	if err := r.DB.Create(&event).Error; err != nil {
+		return nil, err
+	}
+
+	return &event, nil
+}
+
+func (r *mutationResolver) UpdateEvent(ctx context.Context, eventID string, input model.NewEvent) (*model.Event, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) UpdateEvent(ctx context.Context, input model.NewEvent) (*model.Event, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *mutationResolver) DeleteEvent(ctx context.Context, eventID int) (bool, error) {
+func (r *mutationResolver) DeleteEvent(ctx context.Context, eventID string) (bool, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 

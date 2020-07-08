@@ -27,8 +27,6 @@ input NewEvent {
     city: String!
     state: String!
     zip: Int!
-    startDate: Time!
-    endDate: Time!
 }
 
 type User {
@@ -82,8 +80,8 @@ type Mutation {
     refreshToken(input: RefreshTokenInput!): String!
 
     createEvent(input: NewEvent!): Event!
-    updateEvent(input: NewEvent!): Event!
-    deleteEvent(eventId: Int!): Boolean!
+    updateEvent(eventId: ID!, input: NewEvent!): Event!
+    deleteEvent(eventId: ID!): Boolean!
 
     addUserProfilePicture(profilePicture: Upload!): User!
     removeUserProfilePicture(userId: Int!): Boolean!
