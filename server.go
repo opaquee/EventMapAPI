@@ -33,7 +33,12 @@ func main() {
 	}
 
 	log.Println("Migrating tables...")
-	db.AutoMigrate(&model.User{}, &model.Event{})
+	if err := db.AutoMigrate(&model.User{}, &model.Event{}).Error; err != nil {
+		panic(err)
+	}
+	if err := db.Model(&model.Event{}).AddForeignKey("owner_id", "users(id)", "CASCADE", "CASCADE").Error; err != nil {
+		panic(err)
+	}
 
 	log.Println("Starting server. Hold on to your potatoes!")
 	port := os.Getenv("PORT")

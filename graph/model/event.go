@@ -2,6 +2,8 @@ package model
 
 import (
 	"time"
+
+	uuid "github.com/satori/go.uuid"
 )
 
 type Event struct {
@@ -18,5 +20,5 @@ type Event struct {
 	StartDate    time.Time `json:"startDate"`
 	EndDate      time.Time `json:"endDate"`
 	Users        []*User   `json:"users" gorm:"many2many:user_events;"`
-	UserID       UUIDKey   `json:"userId"`
+	OwnerID      uuid.UUID `json:"ownerId"`
 }

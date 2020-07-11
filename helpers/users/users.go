@@ -71,3 +71,14 @@ func CheckAccess(userFromCtx *model.User, userFromDB *model.User) (err error) {
 	}
 	return nil
 }
+
+func CheckEventOwner(userFromCtx *model.User, event *model.Event, db *gorm.DB) (err error) {
+	if err := db.Where(&event).First(&event).Error; err != nil {
+		return err
+	}
+	if event.OwnerID != userFromCtx.UUIDKey.ID {
+		return errors.New("event does not belong to user")
+	}
+
+	return nil
+}

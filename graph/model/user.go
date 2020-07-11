@@ -9,5 +9,5 @@ type User struct {
 	Password           string   `json:"password"`
 	ProfilePicturePath string   `json:"profilePicturePath"`
 	AttendingEvents    []*Event `json:"attendingEvents" gorm:"many2many:user_events;"`
-	OwnedEvents        []*Event `json:"ownedEvents"`
+	OwnedEvents        []*Event `json:"ownedEvents" gorm:"foreignkey:OwnerID"`
 }

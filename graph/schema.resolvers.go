@@ -22,7 +22,18 @@ func (r *eventResolver) ID(ctx context.Context, obj *model.Event) (string, error
 }
 
 func (r *eventResolver) Owner(ctx context.Context, obj *model.Event) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	ownerKey := model.UUIDKey{
+		ID: obj.OwnerID,
+	}
+	owner := &model.User{
+		UUIDKey: ownerKey,
+	}
+
+	if err := r.DB.Where(owner).First(owner).Error; err != nil {
+		return nil, err
+	}
+
+	return owner, nil
 }
 
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.NewUser) (string, error) {
@@ -148,6 +159,10 @@ func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent
 	//TODO: handle auth and relation here
 	//Reject if no user in context
 	//Add user ID/owner foreign key to event
+	userFromCtx := auth.ForContext(ctx)
+	if userFromCtx == nil {
+		return nil, errors.New("no user information from context. You probably didn't provide a token")
+	}
 
 	event := model.Event{
 		Name:         input.Name,
@@ -157,12 +172,18 @@ func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent
 		City:         input.City,
 		State:        input.State,
 		Zip:          input.Zip,
-		//Latitude:   TODO,
-		//Longitude:  TODO,
+		Latitude:     input.Latitude,
+		Longitude:    input.Longitude,
+		OwnerID:      userFromCtx.ID,
 	}
-	//TODO: Geocode address, get lat long
 
 	if err := r.DB.Create(&event).Error; err != nil {
+		return nil, err
+	}
+
+	if err := r.DB.Model(&model.User{
+		UUIDKey: userFromCtx.UUIDKey,
+	}).Association("OwnedEvents").Append(&event).Error; err != nil {
 		return nil, err
 	}
 
@@ -170,8 +191,24 @@ func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent
 }
 
 func (r *mutationResolver) UpdateEvent(ctx context.Context, eventID string, input model.NewEvent) (*model.Event, error) {
-	//TODO: handle auth and relation here
-	//Reject if no user in context
+	userFromCtx := auth.ForContext(ctx)
+	if userFromCtx == nil {
+		return nil, errors.New("no user information from context. You probably didn't provide a token")
+	}
+
+	id, err := uuid.FromString(eventID)
+	if err != nil {
+		return nil, err
+	}
+	oldEvent := &model.Event{
+		UUIDKey: model.UUIDKey{
+			ID: id,
+		},
+	}
+
+	if err := users.CheckEventOwner(userFromCtx, oldEvent, r.DB); err != nil {
+		return nil, err
+	}
 
 	newEvent := model.Event{
 		Name:         input.Name,
@@ -181,9 +218,12 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, eventID string, inpu
 		City:         input.City,
 		State:        input.State,
 		Zip:          input.Zip,
+		Latitude:     input.Latitude,
+		Longitude:    input.Longitude,
+		OwnerID:      userFromCtx.UUIDKey.ID,
 	}
 
-	id, err := uuid.FromString(eventID)
+	id, err = uuid.FromString(eventID)
 	if err != nil {
 		return nil, err
 	}
@@ -198,16 +238,24 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, eventID string, inpu
 }
 
 func (r *mutationResolver) DeleteEvent(ctx context.Context, eventID string) (bool, error) {
-	//TODO: handle auth and relation here
-	//Reject if no user in context
+	userFromCtx := auth.ForContext(ctx)
+	if userFromCtx == nil {
+		return false, errors.New("no user information from context. You probably didn't provide a token")
+	}
 
 	id, err := uuid.FromString(eventID)
 	if err != nil {
 		return false, err
 	}
-
 	UUIDKey := model.UUIDKey{
 		ID: id,
+	}
+	event := &model.Event{
+		UUIDKey: UUIDKey,
+	}
+
+	if err := users.CheckEventOwner(userFromCtx, event, r.DB); err != nil {
+		return false, err
 	}
 
 	if err := r.DB.Unscoped().Delete(&model.Event{
@@ -257,6 +305,22 @@ func (r *userResolver) ID(ctx context.Context, obj *model.User) (string, error) 
 
 func (r *userResolver) ProfilePicture(ctx context.Context, obj *model.User) (*graphql.Upload, error) {
 	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *userResolver) AttendingEvents(ctx context.Context, obj *model.User) ([]*model.Event, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *userResolver) OwnedEvents(ctx context.Context, obj *model.User) ([]*model.Event, error) {
+	var ownedEvents []*model.Event
+
+	if err := r.DB.Model(model.User{
+		UUIDKey: obj.UUIDKey,
+	}).Association("OwnedEvents").Find(&ownedEvents).Error; err != nil {
+		return nil, err
+	}
+
+	return ownedEvents, nil
 }
 
 // Event returns generated.EventResolver implementation.
