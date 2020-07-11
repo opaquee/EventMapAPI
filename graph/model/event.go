@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 type Event struct {
 	UUIDKey
@@ -15,4 +17,6 @@ type Event struct {
 	Longitude    float64   `json:"longitude"`
 	StartDate    time.Time `json:"startDate"`
 	EndDate      time.Time `json:"endDate"`
+	Users        []*User   `json:"users" gorm:"many2many:user_events;"`
+	UserID       UUIDKey   `json:"userId"`
 }

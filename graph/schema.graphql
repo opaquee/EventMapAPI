@@ -37,7 +37,7 @@ type User {
     username: String!
     password: String!
     profilePicture: Upload
-    events: [Event]
+    attendingEvents: [Event]
     ownedEvents: [Event]
 }
 

@@ -14,15 +14,11 @@ import (
 	"github.com/opaquee/EventMapAPI/helpers/auth"
 	"github.com/opaquee/EventMapAPI/helpers/jwt"
 	"github.com/opaquee/EventMapAPI/helpers/users"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 )
 
 func (r *eventResolver) ID(ctx context.Context, obj *model.Event) (string, error) {
 	return obj.UUIDKey.ID.String(), nil
-}
-
-func (r *eventResolver) Users(ctx context.Context, obj *model.Event) ([]*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *eventResolver) Owner(ctx context.Context, obj *model.Event) (*model.User, error) {
@@ -260,14 +256,6 @@ func (r *userResolver) ID(ctx context.Context, obj *model.User) (string, error) 
 }
 
 func (r *userResolver) ProfilePicture(ctx context.Context, obj *model.User) (*graphql.Upload, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *userResolver) Events(ctx context.Context, obj *model.User) ([]*model.Event, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *userResolver) OwnedEvents(ctx context.Context, obj *model.User) ([]*model.Event, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
