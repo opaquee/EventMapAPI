@@ -64,3 +64,8 @@ models:
         resolver: true
       email:
         resolver: true
+  Event:
+    fields:
+      users:
+        resolver: true
+        

@@ -21,6 +21,18 @@ func (r *eventResolver) ID(ctx context.Context, obj *model.Event) (string, error
 	return obj.UUIDKey.ID.String(), nil
 }
 
+func (r *eventResolver) Users(ctx context.Context, obj *model.Event) ([]*model.User, error) {
+	var users []*model.User
+
+	if err := r.DB.Model(model.Event{
+		UUIDKey: obj.UUIDKey,
+	}).Association("Users").Find(&users).Error; err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 func (r *eventResolver) Owner(ctx context.Context, obj *model.Event) (*model.User, error) {
 	ownerKey := model.UUIDKey{
 		ID: obj.OwnerID,
@@ -108,6 +120,12 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, username string) (boo
 	}
 
 	if err := users.CheckAccess(userFromCtx, userFromDB); err != nil {
+		return false, err
+	}
+
+	if err := r.DB.Model(model.User{
+		UUIDKey: userFromDB.UUIDKey,
+	}).Association("AttendingEvents").Clear().Error; err != nil {
 		return false, err
 	}
 
@@ -255,6 +273,12 @@ func (r *mutationResolver) DeleteEvent(ctx context.Context, eventID string) (boo
 		return false, err
 	}
 
+	if err := r.DB.Model(model.Event{
+		UUIDKey: UUIDKey,
+	}).Association("Users").Clear().Error; err != nil {
+		return false, err
+	}
+
 	if err := r.DB.Unscoped().Delete(&model.Event{
 		UUIDKey: UUIDKey,
 	}).Error; err != nil {
@@ -272,12 +296,42 @@ func (r *mutationResolver) RemoveUserProfilePicture(ctx context.Context, userID 
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) AddUserToEvent(ctx context.Context, userID int, eventID int) (*model.Event, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) AddUserToEvent(ctx context.Context, eventID string) (bool, error) {
+	userFromCtx := auth.ForContext(ctx)
+	if userFromCtx == nil {
+		return false, errors.New("no user information from context. You probably didn't provide a token")
+	}
+
+	id, err := uuid.FromString(eventID)
+	if err != nil {
+		return false, err
+	}
+	r.DB.Model(userFromCtx).Association("AttendingEvents").Append(&model.Event{
+		UUIDKey: model.UUIDKey{
+			ID: id,
+		},
+	})
+
+	return true, nil
 }
 
-func (r *mutationResolver) RemoveUserFromEvent(ctx context.Context, userID int, eventID int) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) RemoveUserFromEvent(ctx context.Context, eventID string) (bool, error) {
+	userFromCtx := auth.ForContext(ctx)
+	if userFromCtx == nil {
+		return false, errors.New("no user information from context. You probably didn't provide a token")
+	}
+
+	id, err := uuid.FromString(eventID)
+	if err != nil {
+		return false, err
+	}
+	r.DB.Model(userFromCtx).Association("AttendingEvents").Delete(&model.Event{
+		UUIDKey: model.UUIDKey{
+			ID: id,
+		},
+	})
+
+	return true, nil
 }
 
 func (r *queryResolver) GetAllNearbyEvents(ctx context.Context, zip int) ([]*model.Event, error) {
@@ -345,7 +399,15 @@ func (r *userResolver) ProfilePicture(ctx context.Context, obj *model.User) (*gr
 }
 
 func (r *userResolver) AttendingEvents(ctx context.Context, obj *model.User) ([]*model.Event, error) {
-	panic(fmt.Errorf("not implemented"))
+	var attendingEvents []*model.Event
+
+	if err := r.DB.Model(model.User{
+		UUIDKey: obj.UUIDKey,
+	}).Association("AttendingEvents").Find(&attendingEvents).Error; err != nil {
+		return nil, err
+	}
+
+	return attendingEvents, nil
 }
 
 func (r *userResolver) OwnedEvents(ctx context.Context, obj *model.User) ([]*model.Event, error) {

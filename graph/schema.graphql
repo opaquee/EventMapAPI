@@ -87,8 +87,8 @@ type Mutation {
     addUserProfilePicture(profilePicture: Upload!): User!
     removeUserProfilePicture(userId: Int!): Boolean!
 
-    addUserToEvent(userId: Int!, eventId: Int!): Event!
-    removeUserFromEvent(userId: Int!, eventId: Int!): Boolean!
+    addUserToEvent(eventId: String!): Boolean!
+    removeUserFromEvent(eventId: String!): Boolean!
 }
 
 
