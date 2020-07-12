@@ -60,3 +60,7 @@ models:
         resolver: true
       ownedEvents:
         resolver: true
+      password:
+        resolver: true
+      email:
+        resolver: true

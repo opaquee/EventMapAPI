@@ -14,7 +14,7 @@ import (
 	"github.com/opaquee/EventMapAPI/helpers/auth"
 	"github.com/opaquee/EventMapAPI/helpers/jwt"
 	"github.com/opaquee/EventMapAPI/helpers/users"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 func (r *eventResolver) ID(ctx context.Context, obj *model.Event) (string, error) {
@@ -156,9 +156,6 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, input model.Refresh
 }
 
 func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent) (*model.Event, error) {
-	//TODO: handle auth and relation here
-	//Reject if no user in context
-	//Add user ID/owner foreign key to event
 	userFromCtx := auth.ForContext(ctx)
 	if userFromCtx == nil {
 		return nil, errors.New("no user information from context. You probably didn't provide a token")
@@ -283,24 +280,56 @@ func (r *mutationResolver) RemoveUserFromEvent(ctx context.Context, userID int, 
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) GetAllNearbyEvents(ctx context.Context, latitude float64, longitude float64) ([]*model.Event, error) {
+func (r *queryResolver) GetAllNearbyEvents(ctx context.Context, zip int) ([]*model.Event, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) GetEventUsers(ctx context.Context) ([]*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) GetEventByID(ctx context.Context, eventID string) (*model.Event, error) {
+	id, err := uuid.FromString(eventID)
+	if err != nil {
+		return nil, err
+	}
+	eventFromDB := model.Event{
+		UUIDKey: model.UUIDKey{
+			ID: id,
+		},
+	}
+
+	if err := r.DB.Where(&eventFromDB).First(&eventFromDB).Error; err != nil {
+		return nil, err
+	}
+
+	return &eventFromDB, nil
 }
 
-func (r *queryResolver) GetEventByID(ctx context.Context, eventID int) (*model.Event, error) {
-	panic(fmt.Errorf("not implemented"))
-}
+func (r *queryResolver) GetUserByID(ctx context.Context, userID string) (*model.User, error) {
+	id, err := uuid.FromString(userID)
+	if err != nil {
+		return nil, err
+	}
+	userFromDB := model.User{
+		UUIDKey: model.UUIDKey{
+			ID: id,
+		},
+	}
 
-func (r *queryResolver) GetUserByID(ctx context.Context, userID int) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	if err := r.DB.Where(&userFromDB).First(&userFromDB).Error; err != nil {
+		return nil, err
+	}
+
+	return &userFromDB, nil
 }
 
 func (r *userResolver) ID(ctx context.Context, obj *model.User) (string, error) {
 	return obj.UUIDKey.ID.String(), nil
+}
+
+func (r *userResolver) Email(ctx context.Context, obj *model.User) (string, error) {
+	return "", errors.New("access denied, email is private to user")
+}
+
+func (r *userResolver) Password(ctx context.Context, obj *model.User) (string, error) {
+	return "", errors.New("access denied, password is private to user")
 }
 
 func (r *userResolver) ProfilePicture(ctx context.Context, obj *model.User) (*graphql.Upload, error) {
