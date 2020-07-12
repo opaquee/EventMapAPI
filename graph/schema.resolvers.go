@@ -14,7 +14,7 @@ import (
 	"github.com/opaquee/EventMapAPI/helpers/auth"
 	"github.com/opaquee/EventMapAPI/helpers/jwt"
 	"github.com/opaquee/EventMapAPI/helpers/users"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 )
 
 func (r *eventResolver) ID(ctx context.Context, obj *model.Event) (string, error) {
@@ -281,7 +281,15 @@ func (r *mutationResolver) RemoveUserFromEvent(ctx context.Context, userID int, 
 }
 
 func (r *queryResolver) GetAllNearbyEvents(ctx context.Context, zip int) ([]*model.Event, error) {
-	panic(fmt.Errorf("not implemented"))
+	var nearbyEvents []*model.Event
+
+	if err := r.DB.Where(&model.Event{
+		Zip: zip,
+	}).Find(&nearbyEvents).Error; err != nil {
+		return nil, err
+	}
+
+	return nearbyEvents, nil
 }
 
 func (r *queryResolver) GetEventByID(ctx context.Context, eventID string) (*model.Event, error) {
