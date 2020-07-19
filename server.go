@@ -50,8 +50,7 @@ func main() {
 	router := chi.NewRouter()
 	router.Use(auth.Middleware(db))
 
-	//observers := make(map[int](map[string]chan *model.Event), 1)
-	observers := make(map[string]chan *model.Event, 1)
+	observers := make(map[int](map[string]chan *model.Event), 1)
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{
 		DB:        db,

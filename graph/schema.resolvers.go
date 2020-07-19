@@ -211,7 +211,7 @@ func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent
 	}
 
 	r.MU.Lock()
-	for _, observer := range r.Observers {
+	for _, observer := range r.Observers[input.Zip] {
 		observer <- &event
 	}
 	r.MU.Unlock()
@@ -400,15 +400,23 @@ func (r *subscriptionResolver) NewEvents(ctx context.Context, zip int, userID st
 	fmt.Println(r.Observers)
 	observer := make(chan *model.Event, 1)
 
+	//Cleanup empty observer channels
 	go func() {
 		<-ctx.Done()
 		r.MU.Lock()
-		delete(r.Observers, userID)
+		delete(r.Observers[zip], userID)
+		if len(r.Observers[zip]) == 0 {
+			delete(r.Observers, zip)
+		}
 		r.MU.Unlock()
 	}()
 
 	r.MU.Lock()
-	r.Observers[userID] = observer
+	if r.Observers[zip] == nil {
+		localObservers := make(map[string]chan *model.Event, 1)
+		r.Observers[zip] = localObservers
+	}
+	r.Observers[zip][userID] = observer
 	r.MU.Unlock()
 
 	return observer, nil
