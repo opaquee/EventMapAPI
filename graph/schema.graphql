@@ -43,6 +43,11 @@ type User {
     ownedEvents: [Event]
 }
 
+type LoginResponse {
+    token: String!
+    user: User!
+}
+
 input NewUser {
     firstName: String!
     lastName: String!
@@ -77,7 +82,7 @@ type Mutation {
     updateUser(username: String!, input: updateUserInput!): User!
     deleteUser(username: String!): Boolean!
     
-    login(input: Login!): String!
+    login(input: Login!): LoginResponse!
     refreshToken(input: RefreshTokenInput!): String!
 
     createEvent(input: NewEvent!): Event!
@@ -89,6 +94,10 @@ type Mutation {
 
     addUserToEvent(eventId: String!): Boolean!
     removeUserFromEvent(eventId: String!): Boolean!
+}
+
+type Subscription {
+    newEvents(zip: Int!, userId: String!): Event!
 }
 
 

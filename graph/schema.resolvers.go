@@ -14,7 +14,7 @@ import (
 	"github.com/opaquee/EventMapAPI/helpers/auth"
 	"github.com/opaquee/EventMapAPI/helpers/jwt"
 	"github.com/opaquee/EventMapAPI/helpers/users"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 func (r *eventResolver) ID(ctx context.Context, obj *model.Event) (string, error) {
@@ -136,7 +136,7 @@ func (r *mutationResolver) DeleteUser(ctx context.Context, username string) (boo
 	return true, nil
 }
 
-func (r *mutationResolver) Login(ctx context.Context, input model.Login) (string, error) {
+func (r *mutationResolver) Login(ctx context.Context, input model.Login) (*model.LoginResponse, error) {
 	user := model.User{
 		Username: input.Username,
 		Password: input.Password,
@@ -144,19 +144,26 @@ func (r *mutationResolver) Login(ctx context.Context, input model.Login) (string
 
 	correctLogin, err := users.Authenticate(&user, r.DB)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
 	if correctLogin == false {
-		return "", errors.New("incorrect username or password")
+		return nil, errors.New("incorrect username or password")
 	}
 
 	token, err := jwt.GenerateToken(user.Username)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return token, nil
+	userFromDB, err := users.GetUserByUsername(user.Username, r.DB)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.LoginResponse{
+		Token: token,
+		User:  userFromDB,
+	}, nil
 }
 
 func (r *mutationResolver) RefreshToken(ctx context.Context, input model.RefreshTokenInput) (string, error) {
@@ -175,6 +182,7 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, input model.Refresh
 
 func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent) (*model.Event, error) {
 	userFromCtx := auth.ForContext(ctx)
+	fmt.Println(userFromCtx)
 	if userFromCtx == nil {
 		return nil, errors.New("no user information from context. You probably didn't provide a token")
 	}
@@ -201,6 +209,12 @@ func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent
 	}).Association("OwnedEvents").Append(&event).Error; err != nil {
 		return nil, err
 	}
+
+	r.MU.Lock()
+	for _, observer := range r.Observers {
+		observer <- &event
+	}
+	r.MU.Unlock()
 
 	return &event, nil
 }
@@ -382,6 +396,24 @@ func (r *queryResolver) GetUserByID(ctx context.Context, userID string) (*model.
 	return &userFromDB, nil
 }
 
+func (r *subscriptionResolver) NewEvents(ctx context.Context, zip int, userID string) (<-chan *model.Event, error) {
+	fmt.Println(r.Observers)
+	observer := make(chan *model.Event, 1)
+
+	go func() {
+		<-ctx.Done()
+		r.MU.Lock()
+		delete(r.Observers, userID)
+		r.MU.Unlock()
+	}()
+
+	r.MU.Lock()
+	r.Observers[userID] = observer
+	r.MU.Unlock()
+
+	return observer, nil
+}
+
 func (r *userResolver) ID(ctx context.Context, obj *model.User) (string, error) {
 	return obj.UUIDKey.ID.String(), nil
 }
@@ -431,10 +463,14 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// Subscription returns generated.SubscriptionResolver implementation.
+func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
+
 // User returns generated.UserResolver implementation.
 func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 
 type eventResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
