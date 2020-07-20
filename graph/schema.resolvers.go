@@ -182,7 +182,6 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, input model.Refresh
 
 func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent) (*model.Event, error) {
 	userFromCtx := auth.ForContext(ctx)
-	fmt.Println(userFromCtx)
 	if userFromCtx == nil {
 		return nil, errors.New("no user information from context. You probably didn't provide a token")
 	}
@@ -262,6 +261,12 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, eventID string, inpu
 	if err := r.DB.Save(&newEvent).Error; err != nil {
 		return nil, err
 	}
+
+	r.MU.Lock()
+	for _, observer := range r.Observers[input.Zip] {
+		observer <- &newEvent
+	}
+	r.MU.Unlock()
 
 	return &newEvent, nil
 }
@@ -397,7 +402,6 @@ func (r *queryResolver) GetUserByID(ctx context.Context, userID string) (*model.
 }
 
 func (r *subscriptionResolver) NewEvents(ctx context.Context, zip int, userID string) (<-chan *model.Event, error) {
-	fmt.Println(r.Observers)
 	observer := make(chan *model.Event, 1)
 
 	//Cleanup empty observer channels
