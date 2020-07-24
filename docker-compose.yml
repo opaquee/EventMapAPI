@@ -12,6 +12,8 @@ services:
       - db
     networks:
       - backend_network
+    env_file: 
+      - web.env
 
   db:
     image: postgres:latest

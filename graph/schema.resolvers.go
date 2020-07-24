@@ -12,6 +12,7 @@ import (
 	"github.com/opaquee/EventMapAPI/graph/generated"
 	"github.com/opaquee/EventMapAPI/graph/model"
 	"github.com/opaquee/EventMapAPI/helpers/auth"
+	"github.com/opaquee/EventMapAPI/helpers/geocode"
 	"github.com/opaquee/EventMapAPI/helpers/jwt"
 	"github.com/opaquee/EventMapAPI/helpers/users"
 	uuid "github.com/satori/go.uuid"
@@ -194,9 +195,12 @@ func (r *mutationResolver) CreateEvent(ctx context.Context, input model.NewEvent
 		City:         input.City,
 		State:        input.State,
 		Zip:          input.Zip,
-		Latitude:     input.Latitude,
-		Longitude:    input.Longitude,
 		OwnerID:      userFromCtx.ID,
+	}
+
+	//Get latitude and longitude from the geocoding api
+	if err := geocode.GetLatLng(&event); err != nil {
+		return nil, err
 	}
 
 	if err := r.DB.Create(&event).Error; err != nil {
@@ -246,8 +250,8 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, eventID string, inpu
 		City:         input.City,
 		State:        input.State,
 		Zip:          input.Zip,
-		Latitude:     input.Latitude,
-		Longitude:    input.Longitude,
+		Latitude:     oldEvent.Latitude,
+		Longitude:    oldEvent.Longitude,
 		OwnerID:      userFromCtx.UUIDKey.ID,
 	}
 
@@ -255,8 +259,17 @@ func (r *mutationResolver) UpdateEvent(ctx context.Context, eventID string, inpu
 	if err != nil {
 		return nil, err
 	}
-
 	newEvent.UUIDKey.ID = id
+
+	//If address is new, get latitude and longitude from the geocoding api
+	if oldEvent.AddressLine1 != newEvent.AddressLine1 ||
+		oldEvent.City != newEvent.City ||
+		oldEvent.State != newEvent.State ||
+		oldEvent.Zip != newEvent.Zip {
+		if err := geocode.GetLatLng(&newEvent); err != nil {
+			return nil, err
+		}
+	}
 
 	if err := r.DB.Save(&newEvent).Error; err != nil {
 		return nil, err

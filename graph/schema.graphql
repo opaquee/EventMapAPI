@@ -27,8 +27,6 @@ input NewEvent {
     city: String!
     state: String!
     zip: Int!
-    latitude: Float!
-    longitude: Float!
 }
 
 type User {
