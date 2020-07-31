@@ -2,102 +2,97 @@ scalar Upload
 scalar Time
 
 type Event {
-    id: ID!
-    name: String!
-    description: String!
-    addressLine1: String!
-    addressLine2: String!
-    city: String!
-    state: String!
-    zip: Int!
-    latitude: Float!
-    longitude: Float!
-    startDate: Time!
-    endDate: Time!
-    users: [User]
-    owner: User!
+  id: ID!
+  name: String!
+  description: String!
+  addressLine1: String!
+  addressLine2: String!
+  city: String!
+  state: String!
+  zip: Int!
+  latitude: Float!
+  longitude: Float!
+  startDate: Time!
+  endDate: Time!
+  users: [User]
+  owner: User!
 }
 
-
 input NewEvent {
-    name: String!
-    description: String!
-    addressLine1: String!
-    addressLine2: String!
-    city: String!
-    state: String!
-    zip: Int!
+  name: String!
+  description: String!
+  addressLine1: String!
+  addressLine2: String!
+  city: String!
+  state: String!
+  zip: Int!
 }
 
 type User {
-    id: ID!
-    firstName: String!
-    lastName: String!
-    email: String!
-    username: String!
-    password: String!
-    profilePicture: Upload
-    attendingEvents: [Event]
-    ownedEvents: [Event]
+  id: ID!
+  firstName: String!
+  lastName: String!
+  email: String!
+  username: String!
+  password: String!
+  profilePicture: Upload
+  attendingEvents: [Event]
+  ownedEvents: [Event]
 }
 
 type LoginResponse {
-    token: String!
-    user: User!
+  token: String!
+  user: User!
 }
 
 input NewUser {
-    firstName: String!
-    lastName: String!
-    email: String!
-    username: String!
-    password: String!
+  firstName: String!
+  lastName: String!
+  email: String!
+  username: String!
+  password: String!
 }
 
 input Login {
-    username: String!
-    password: String!
+  username: String!
+  password: String!
 }
 
 input RefreshTokenInput {
-    token: String!
+  token: String!
 }
 
 input updateUserInput {
-    firstName: String!
-    lastName: String!
-    email: String!
+  firstName: String!
+  lastName: String!
+  email: String!
 }
 
 type Query {
-    getAllNearbyEvents(zip: Int!): [Event]
-    getEventById(eventId: String!): Event!
-    getUserById(userId: String!): User!
+  getAllNearbyEvents(zip: Int!): [Event]
+  getEventById(eventId: String!): Event!
+  getUserById(userId: String!): User!
 }
 
 type Mutation {
-    createUser(input: NewUser!): String!
-    updateUser(username: String!, input: updateUserInput!): User!
-    deleteUser(username: String!): Boolean!
-    
-    login(input: Login!): LoginResponse!
-    refreshToken(input: RefreshTokenInput!): String!
+  createUser(input: NewUser!): String!
+  updateUser(username: String!, input: updateUserInput!): User!
+  deleteUser(username: String!): Boolean!
 
-    createEvent(input: NewEvent!): Event!
-    updateEvent(eventId: ID!, input: NewEvent!): Event!
-    deleteEvent(eventId: ID!): Boolean!
+  login(input: Login!): LoginResponse!
+  refreshToken(input: RefreshTokenInput!): String!
 
-    addUserProfilePicture(profilePicture: Upload!): User!
-    removeUserProfilePicture(userId: Int!): Boolean!
+  createEvent(input: NewEvent!): Event!
+  updateEvent(eventId: ID!, input: NewEvent!): Event!
+  deleteEvent(eventId: ID!): Boolean!
 
-    addUserToEvent(eventId: String!): Boolean!
-    removeUserFromEvent(eventId: String!): Boolean!
+  addUserProfilePicture(profilePicture: Upload!): Boolean!
+  removeUserProfilePicture: Boolean!
+
+  addUserToEvent(eventId: String!): Boolean!
+  removeUserFromEvent(eventId: String!): Boolean!
 }
 
 type Subscription {
-    newEvents(zip: Int!, userId: String!): Event!
+  newEvents(zip: Int!, userId: String!): Event!
 }
-
-
-
-

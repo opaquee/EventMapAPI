@@ -11,8 +11,8 @@ import (
 	"github.com/opaquee/EventMapAPI/graph/model"
 )
 
-const geo_api_url = "http://api.positionstack.com"
-const forward_geo = "v1/forward"
+const geo_api_url string = "http://api.positionstack.com"
+const forward_geo string = "v1/forward"
 
 type ResponseData struct {
 	Data []ResponseDataEntry `json:"data,omitempty"`

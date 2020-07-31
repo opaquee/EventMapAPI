@@ -6,6 +6,8 @@ require (
 	github.com/99designs/gqlgen v0.11.3
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-chi/chi v4.1.2+incompatible
+	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/jinzhu/gorm v1.9.14
 	github.com/lib/pq v1.7.0 // indirect
 	github.com/satori/go.uuid v1.2.0

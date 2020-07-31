@@ -1,18 +1,20 @@
-version: '3'
+version: "3"
 services:
   app:
     container_name: app_container
     build: .
-    ports: 
-      - 8080:8080 
+    ports:
+      - 8080:8080
     restart: on-failure
     volumes:
       - app_volume:/usr/src/app/
+    environment:
+      APP_VOLUME: /usr/src/app/
     depends_on:
       - db
     networks:
       - backend_network
-    env_file: 
+    env_file:
       - web.env
 
   db:
@@ -24,12 +26,12 @@ services:
       POSTGRES_DB: postgres
       DATABASE_HOST: host
     ports:
-      - '5432:5432'
+      - "5432:5432"
     volumes:
       - db_volume:/var/lib/postgresql/data
     networks:
       - backend_network
-    
+
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin_container

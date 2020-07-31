@@ -7,6 +7,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/opaquee/EventMapAPI/graph/generated"
@@ -15,7 +17,7 @@ import (
 	"github.com/opaquee/EventMapAPI/helpers/geocode"
 	"github.com/opaquee/EventMapAPI/helpers/jwt"
 	"github.com/opaquee/EventMapAPI/helpers/users"
-	uuid "github.com/satori/go.uuid"
+	"github.com/satori/go.uuid"
 )
 
 func (r *eventResolver) ID(ctx context.Context, obj *model.Event) (string, error) {
@@ -320,11 +322,27 @@ func (r *mutationResolver) DeleteEvent(ctx context.Context, eventID string) (boo
 	return true, nil
 }
 
-func (r *mutationResolver) AddUserProfilePicture(ctx context.Context, profilePicture graphql.Upload) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) AddUserProfilePicture(ctx context.Context, profilePicture graphql.Upload) (bool, error) {
+	userFromCtx := auth.ForContext(ctx)
+	if userFromCtx == nil {
+		return false, errors.New("no user information from context. You probably didn't provide a token")
+	}
+
+	content, err := ioutil.ReadAll(profilePicture.File)
+	if err != nil {
+		return false, err
+	}
+	if _, err := os.Create(os.Getenv("APP_VOLUME") + profilePicture.Filename); err != nil {
+		return false, err
+	}
+	if err := ioutil.WriteFile(os.Getenv("APP_VOLUME")+profilePicture.Filename, content, 0644); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
-func (r *mutationResolver) RemoveUserProfilePicture(ctx context.Context, userID int) (bool, error) {
+func (r *mutationResolver) RemoveUserProfilePicture(ctx context.Context) (bool, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
