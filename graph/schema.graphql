@@ -35,9 +35,15 @@ type User {
   email: String!
   username: String!
   password: String!
-  profilePicture: Upload
+  profilePicture: File
   attendingEvents: [Event]
   ownedEvents: [Event]
+}
+
+type File {
+  name: String!
+  content: String!
+  contentType: String!
 }
 
 type LoginResponse {

@@ -6,18 +6,19 @@ package graph
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/opaquee/EventMapAPI/graph/generated"
 	"github.com/opaquee/EventMapAPI/graph/model"
 	"github.com/opaquee/EventMapAPI/helpers/auth"
+	"github.com/opaquee/EventMapAPI/helpers/file"
 	"github.com/opaquee/EventMapAPI/helpers/geocode"
 	"github.com/opaquee/EventMapAPI/helpers/jwt"
 	"github.com/opaquee/EventMapAPI/helpers/users"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 func (r *eventResolver) ID(ctx context.Context, obj *model.Event) (string, error) {
@@ -328,14 +329,28 @@ func (r *mutationResolver) AddUserProfilePicture(ctx context.Context, profilePic
 		return false, errors.New("no user information from context. You probably didn't provide a token")
 	}
 
+	if valid, err := file.ValidImageFile(profilePicture.Filename); err != nil || valid == false {
+		return false, errors.New("Invalid image file")
+	}
 	content, err := ioutil.ReadAll(profilePicture.File)
 	if err != nil {
 		return false, err
 	}
-	if _, err := os.Create(os.Getenv("APP_VOLUME") + profilePicture.Filename); err != nil {
+
+	filePath := os.Getenv("APP_VOLUME") + file.NewFileName(profilePicture.Filename, userFromCtx)
+	if _, err := os.Create(filePath); err != nil {
 		return false, err
 	}
-	if err := ioutil.WriteFile(os.Getenv("APP_VOLUME")+profilePicture.Filename, content, 0644); err != nil {
+	if err := ioutil.WriteFile(filePath, content, 0644); err != nil {
+		return false, err
+	}
+
+	userFromDB, err := users.GetUserByUsername(userFromCtx.Username, r.DB)
+	if err != nil {
+		return false, err
+	}
+	userFromDB.ProfilePicturePath = filePath
+	if err := r.DB.Save(userFromDB).Error; err != nil {
 		return false, err
 	}
 
@@ -343,7 +358,21 @@ func (r *mutationResolver) AddUserProfilePicture(ctx context.Context, profilePic
 }
 
 func (r *mutationResolver) RemoveUserProfilePicture(ctx context.Context) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	userFromCtx := auth.ForContext(ctx)
+	if userFromCtx == nil {
+		return false, errors.New("no user information from context. You probably didn't provide a token")
+	}
+
+	splitPath := strings.Split(userFromCtx.ProfilePicturePath, ".")
+	if splitPath[0] != os.Getenv("APP_VOLUME")+userFromCtx.UUIDKey.ID.String() {
+		return false, errors.New("Access denied, can't delete file at specified path")
+	}
+
+	if err := os.Remove(userFromCtx.ProfilePicturePath); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (r *mutationResolver) AddUserToEvent(ctx context.Context, eventID string) (bool, error) {
@@ -469,8 +498,24 @@ func (r *userResolver) Password(ctx context.Context, obj *model.User) (string, e
 	return "", errors.New("access denied, password is private to user")
 }
 
-func (r *userResolver) ProfilePicture(ctx context.Context, obj *model.User) (*graphql.Upload, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *userResolver) ProfilePicture(ctx context.Context, obj *model.User) (*model.File, error) {
+	userFromCtx := auth.ForContext(ctx)
+	if userFromCtx == nil {
+		return nil, errors.New("no user information from context. You probably didn't provide a token")
+	}
+
+	fileBytes, err := ioutil.ReadFile(userFromCtx.ProfilePicturePath)
+	if err != nil {
+		return nil, err
+	}
+
+	ext := strings.Split(userFromCtx.ProfilePicturePath, ".")[1]
+
+	return &model.File{
+		Name:        userFromCtx.Username + "." + ext,
+		Content:     string(fileBytes),
+		ContentType: "image/" + ext,
+	}, nil
 }
 
 func (r *userResolver) AttendingEvents(ctx context.Context, obj *model.User) ([]*model.Event, error) {

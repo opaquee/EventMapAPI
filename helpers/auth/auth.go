@@ -39,11 +39,12 @@ func Middleware(db *gorm.DB) func(http.Handler) http.Handler {
 				return
 			}
 			user := model.User{
-				Username:  username,
-				UUIDKey:   userFromDB.UUIDKey,
-				Email:     userFromDB.Email,
-				FirstName: userFromDB.FirstName,
-				LastName:  userFromDB.LastName,
+				Username:           username,
+				UUIDKey:            userFromDB.UUIDKey,
+				Email:              userFromDB.Email,
+				FirstName:          userFromDB.FirstName,
+				LastName:           userFromDB.LastName,
+				ProfilePicturePath: userFromDB.ProfilePicturePath,
 			}
 
 			ctx := context.WithValue(r.Context(), userCtxKey, &user)
